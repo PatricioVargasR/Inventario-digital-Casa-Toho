@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block titulo %}{{ area.nombre_area | bonito }} · Inventario Casa Töhö{% endblock %}
+
+{% block cuerpo %}
+  {% include '_cabecera.html' %}
+
+  <main class="envoltura">
+    <a class="atras" href="{{ url_for('inicio') }}">← Todas las áreas</a>
+    <h2 class="titulo-pagina">{{ area.nombre_area | bonito }}</h2>
+
+    <section class="avance" aria-live="polite">
+      <div class="fila">
+        <strong>{{ conteo['listo'] }} de {{ total }}</strong>
+        <span>productos ya están en el resumen</span>
+      </div>
+      <div class="barra"><i style="width: {{ (conteo['listo'] / total * 100) | round(1) if total else 0 }}%"></i></div>
+    </section>
+
+    <form class="buscador" method="get" action="{{ url_for('area', id_area=area.id_area) }}" role="search">
+      <div class="busca-fila">
+        <input id="buscar" name="q" type="search" value="{{ q }}" placeholder="Buscar producto" autocomplete="off"
+          aria-label="Buscar producto">
+        <button class="secundario" type="submit">Buscar</button>
+      </div>
+      {% if estado %}<input type="hidden" name="estado" value="{{ estado }}">{% endif %}
+      <nav class="chips" aria-label="Filtrar por estado">
+        <a class="chip" href="{{ url_for('area', id_area=area.id_area, q=q or None) }}"
+          {% if not estado %}aria-current="true"{% endif %}>Todos · {{ total }}</a>
+        {% for clave_estado, etiqueta in [('falta', 'Faltan'), ('revisar', 'Por revisar'), ('listo', 'Listos')] %}
+          <a class="chip {{ 'pend' if clave_estado != 'listo' }}" href="{{ url_for('area', id_area=area.id_area, estado=clave_estado, q=q or None) }}"
+            {% if estado == clave_estado %}aria-current="true"{% endif %}>{{ etiqueta }} · {{ conteo[clave_estado] }}</a>
+        {% endfor %}
+      </nav>
+    </form>
+
+    <details class="agregar-producto" {% if error %}open{% endif %}>
+      <summary>+ Agregar un producto que no está en la lista</summary>
+      <form method="post" action="{{ url_for('agregar_producto', id_area=area.id_area) }}" autocomplete="off">
+        {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+        <div class="busca-fila">
+          <input name="nombre_producto" maxlength="150" value="{{ nuevo }}" placeholder="Nombre del producto"
+            aria-label="Nombre del producto" required>
+          <button class="primario-chico" type="submit">Agregar</button>
+        </div>
+      </form>
+    </details>
+
+    <div class="lista">
+      {% if not productos %}
+        <div class="vacio">
+          <b>Sin resultados</b>
+          Prueba con otra palabra o <a href="{{ url_for('area', id_area=area.id_area) }}">quita los filtros</a>.
+        </div>
+      {% else %}
+        <section class="grupo">
+          <ul>
+            {% for p in productos %}
+              <li id="producto-{{ p.id_producto }}">
+                <a class="receta" href="{{ url_for('producto', id_producto=p.id_producto) }}">
+                  <span class="n">
+                    {{ p.nombre_producto }}
+                    <span class="s">
+                      {% if p.insumos %}{% for i in p.insumos | sort(attribute='id_insumo') %}{{ i.nombre_insumo }}{{ ' · ' if not loop.last }}{% endfor %}
+                      {% else %}Todavía no está en el resumen{% endif %}
+                    </span>
+                  </span>
+                  <span class="pill {{ {'listo': 'ok', 'revisar': 'pend', 'falta': 'falta'}[p.estado] }}">{{ estados[p.estado] }}</span>
+                </a>
+              </li>
+            {% endfor %}
+          </ul>
+        </section>
+      {% endif %}
+    </div>
+  </main>
+{% endblock %}

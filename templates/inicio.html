@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block cuerpo %}
+  {% include '_cabecera.html' %}
+
+  <main class="envoltura">
+
+    <section class="avance" aria-live="polite">
+      <div class="fila">
+        <strong>{{ productos_listos }} de {{ n_productos }}</strong>
+        <span>productos de la lista ya están en el resumen</span>
+      </div>
+      <div class="barra"><i style="width: {{ p_productos }}%"></i></div>
+    </section>
+
+    <section class="avance">
+      <div class="fila">
+        <strong>{{ insumos_completos }} de {{ n_insumos }}</strong>
+        <span>insumos del resumen tienen todos sus datos</span>
+      </div>
+      <div class="barra"><i style="width: {{ (insumos_completos / n_insumos * 100) | round(1) if n_insumos else 0 }}%"></i></div>
+    </section>
+
+    <div class="acciones">
+      <a class="secundario" href="{{ url_for('insumos', pend=1) }}">Insumos por completar</a>
+      <a class="secundario" href="{{ url_for('exportar_resumen') }}">Descargar Excel</a>
+    </div>
+
+    <div class="lista">
+      {% if not filas %}
+        <div class="vacio"><b>Todavía no hay áreas</b>Carga la lista de cotejo con <code>python seed.py</code> y vuelve a abrir esta página.</div>
+      {% else %}
+        <section class="grupo">
+          <h2>Elige un área para revisar</h2>
+          <ul>
+            {% for f in filas %}
+              <li>
+                <a class="receta" href="{{ url_for('area', id_area=f.area.id_area) }}">
+                  <span class="n">
+                    {{ f.area.nombre_area | bonito }}
+                    <span class="s">
+                      {{ f.listo }} de {{ f.total }} listos{% if f.revisar %} · {{ f.revisar }} por revisar{% endif %}
+                    </span>
+                    <span class="seg" role="img"
+                      aria-label="{{ f.listo }} listos, {{ f.revisar }} por revisar, {{ f.falta }} faltan">
+                      <i class="l" style="width: {{ f.p_listo }}%"></i><i class="r" style="width: {{ f.p_revisar }}%"></i>
+                    </span>
+                  </span>
+                  {% if f.falta %}
+                    <span class="pill pend">Faltan {{ f.falta }}</span>
+                  {% elif f.revisar %}
+                    <span class="pill pend">Revisar {{ f.revisar }}</span>
+                  {% else %}
+                    <span class="pill ok">Completa</span>
+                  {% endif %}
+                </a>
+              </li>
+            {% endfor %}
+          </ul>
+        </section>
+      {% endif %}
+    </div>
+  </main>
+{% endblock %}

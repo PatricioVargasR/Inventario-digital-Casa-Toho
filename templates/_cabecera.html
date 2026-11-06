@@ -1,0 +1,18 @@
+{# Encabezado y navegación comunes a las páginas de lista #}
+<header class="top">
+  <div class="in">
+    <img class="marca" src="{{ url_for('static', filename='images/logo.png')}}" alt="Casa Töhö">
+    <div>
+      <h1>Inventario</h1>
+      <p>Casa Töhö · Insumos</p>
+    </div>
+  </div>
+</header>
+{% set ep = request.endpoint %}
+<nav class="menu" aria-label="Secciones">
+  <div class="in">
+    <a href="{{ url_for('inicio') }}" {% if ep in ('inicio', 'area', 'agregar_producto', 'producto') %}aria-current="page"{% endif %}>Lista de cotejo</a>
+    <a href="{{ url_for('insumos') }}" {% if ep in ('insumos', 'nuevo_insumo', 'editar_insumo') %}aria-current="page"{% endif %}>Resumen</a>
+    <a href="{{ url_for('catalogo', tipo='proveedores') }}" {% if ep in ('catalogo', 'agregar_catalogo', 'renombrar_catalogo', 'borrar_catalogo') %}aria-current="page"{% endif %}>Catálogos</a>
+  </div>
+</nav>

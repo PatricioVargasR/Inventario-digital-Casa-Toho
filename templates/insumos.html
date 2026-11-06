@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block titulo %}Resumen de insumos · Inventario Casa Töhö{% endblock %}
+
+{% block cuerpo %}
+  {% include '_cabecera.html' %}
+
+  <main class="envoltura">
+
+    <section class="avance" aria-live="polite">
+      <div class="fila">
+        <strong>{{ completos }} de {{ total }} insumos completos</strong>
+        <span>{{ total - completos }} por completar</span>
+      </div>
+      <div class="barra"><i style="width: {{ (completos / total * 100) | round(1) if total else 0 }}%"></i></div>
+    </section>
+
+    <p class="aviso">Este es el <b>resumen</b> que se descarga en Excel. Cada insumo lleva categoría, presentación,
+      unidad, proveedor y precio sin impuesto.</p>
+    <div class="acciones">
+      <a class="secundario" href="{{ url_for('exportar_resumen') }}">Descargar Excel</a>
+      <a class="secundario" href="{{ url_for('exportar_respaldo') }}">Respaldo completo</a>
+    </div>
+
+    {# Búsqueda y filtros: formulario GET normal; Flask hace la consulta #}
+    <form class="buscador" method="get" action="{{ url_for('insumos') }}" role="search">
+      <div class="busca-fila">
+        <input id="buscar" name="q" type="search" value="{{ q }}" placeholder="Buscar insumo" autocomplete="off"
+          aria-label="Buscar insumo">
+        <button class="secundario" type="submit">Buscar</button>
+      </div>
+      {% if categoria %}<input type="hidden" name="categoria" value="{{ categoria }}">{% endif %}
+      {% if solo_pend %}<input type="hidden" name="pend" value="1">{% endif %}
+      <select name="proveedor" data-autoenviar aria-label="Filtrar por proveedor">
+        <option value="">Todos los proveedores</option>
+        {% for p in proveedores %}
+          <option value="{{ p.id_proveedor }}" {{ 'selected' if proveedor == p.id_proveedor }}>{{ p.nombre_proveedor }}</option>
+        {% endfor %}
+      </select>
+
+      {% if chips %}
+        <nav class="chips" aria-label="Filtrar por categoría">
+          <a class="chip pend" href="{{ url_for('insumos', q=q or None, categoria=categoria, proveedor=proveedor, pend=None if solo_pend else '1') }}"
+            {% if solo_pend %}aria-current="true"{% endif %}>Por completar</a>
+          <a class="chip" href="{{ url_for('insumos', q=q or None, proveedor=proveedor, pend='1' if solo_pend else None) }}"
+            {% if not categoria %}aria-current="true"{% endif %}>Todas</a>
+          {% for c in chips %}
+            <a class="chip" href="{{ url_for('insumos', q=q or None, categoria=c.id_categoria, proveedor=proveedor, pend='1' if solo_pend else None) }}"
+              {% if categoria == c.id_categoria %}aria-current="true"{% endif %}>{{ c.nombre_categoria }}</a>
+          {% endfor %}
+        </nav>
+      {% endif %}
+    </form>
+
+    <div class="lista">
+      {% if total == 0 %}
+        <div class="vacio"><b>Todavía no hay insumos</b>Toca “+ Nuevo insumo” o carga el Excel con <code>python seed.py</code>.</div>
+      {% elif not secciones %}
+        <div class="vacio"><b>Sin resultados</b>Prueba con otra palabra o <a href="{{ url_for('insumos') }}">quita los filtros</a>.</div>
+      {% endif %}
+
+      {% for cat, items in secciones %}
+        <section class="grupo">
+          <h2>{{ cat.nombre_categoria if cat else 'Sin categoría' }} · {{ items | length }}</h2>
+          <ul>
+            {% for i in items %}
+              <li id="insumo-{{ i.id_insumo }}">
+                <a class="receta" href="{{ url_for('editar_insumo', id_insumo=i.id_insumo) }}">
+                  <span class="n">
+                    {{ i.nombre_insumo }}
+                    <span class="s">{{ i.detalle or 'Sin datos de presentación' }}</span>
+                  </span>
+                  {% if i.completo %}
+                    <span class="precio">{{ i.precio_sin_impuesto | moneda }}</span>
+                  {% else %}
+                    <span class="pill pend">{{ i.faltantes | faltan_texto }}</span>
+                  {% endif %}
+                </a>
+              </li>
+            {% endfor %}
+          </ul>
+        </section>
+      {% endfor %}
+    </div>
+  </main>
+
+  <a class="fab" href="{{ url_for('nuevo_insumo') }}">+ Nuevo insumo</a>
+{% endblock %}

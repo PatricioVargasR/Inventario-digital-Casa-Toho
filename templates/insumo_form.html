@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block titulo %}{{ forma.nombre or 'Nuevo insumo' }} · Inventario Casa Töhö{% endblock %}
+
+{% block cuerpo %}
+  <section class="hoja" aria-labelledby="hoja-titulo">
+    <div class="hoja-top">
+      {% if producto %}
+        <a class="btn-icono" href="{{ url_for('producto', id_producto=producto.id_producto) }}">← Volver</a>
+      {% else %}
+        <a class="btn-icono" href="{{ url_for('insumos', _anchor=('insumo-' ~ insumo.id_insumo) if insumo else None) }}">← Volver</a>
+      {% endif %}
+      <div class="t" id="hoja-titulo">{{ insumo.nombre_insumo if insumo else 'Nuevo insumo' }}</div>
+    </div>
+
+    <form class="form" id="form-insumo" method="post" autocomplete="off"
+      action="{{ url_for('editar_insumo', id_insumo=insumo.id_insumo) if insumo else url_for('nuevo_insumo') }}">
+
+      {# Esta barra va PRIMERO dentro del formulario a propósito: el primer botón de envío es el que
+         se activa al presionar Enter, y debe ser "Guardar" y nunca "Borrar". #}
+      <div class="barra-guardar">
+        <div class="in">
+          <button class="primario" type="submit">{{ 'Guardar cambios' if insumo else 'Guardar insumo' }}</button>
+        </div>
+      </div>
+
+      {% if producto %}
+        <input type="hidden" name="producto" value="{{ producto.id_producto }}">
+        <p class="aviso">Al guardar, este insumo quedará vinculado con <b>{{ producto.nombre_producto }}</b>
+          ({{ producto.area.nombre_area | bonito }}).</p>
+      {% endif %}
+      {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+      <p class="ayuda">Solo el nombre es obligatorio. Puedes guardar ahora y completar el resto después.</p>
+
+      <fieldset class="grupo-campos general">
+        <legend>Información general</legend>
+        <div class="campo"><label for="f-nombre">Nombre del insumo</label>
+          <input id="f-nombre" name="nombre_insumo" required maxlength="150" value="{{ forma.nombre }}"
+            placeholder="Ej. Harina de trigo"></div>
+        <div class="campo"><label for="f-categoria">Categoría</label>
+          <select id="f-categoria" name="categoria_insumo">
+            <option value="">Elegir categoría…</option>
+            {% for c in categorias %}
+              <option value="{{ c.id_categoria }}" {{ 'selected' if c.id_categoria | string == forma.categoria }}>{{ c.nombre_categoria }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </fieldset>
+
+      <fieldset class="grupo-campos presentacion">
+        <legend>Información de presentación</legend>
+        <p class="ayuda">Cómo se compra: por ejemplo, un costal de 25 kg, una caja de 12 piezas o un kilo.</p>
+        <div class="dos">
+          <div class="campo"><label for="f-presentacion">Presentación</label>
+            <input id="f-presentacion" name="nombre_presentacion" maxlength="80" value="{{ forma.presentacion }}"
+              placeholder="Ej. Costal"></div>
+          <div class="campo"><label for="f-unidad">Unidad de medida</label>
+            <select id="f-unidad" name="unidad_presentacion">
+              <option value="">Elegir…</option>
+              {% for u in unidades %}
+                <option value="{{ u.id_unidad }}" {{ 'selected' if u.id_unidad | string == forma.unidad }}>{{ u.nombre_unidad }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="grupo-campos proveedor">
+        <legend>Información del proveedor</legend>
+        <div class="campo"><label for="f-proveedor">Proveedor</label>
+          <select id="f-proveedor" name="proveedor_insumo">
+            <option value="">Elegir proveedor…</option>
+            {% for p in proveedores %}
+              <option value="{{ p.id_proveedor }}" {{ 'selected' if p.id_proveedor | string == forma.proveedor }}>{{ p.nombre_proveedor }}</option>
+            {% endfor %}
+          </select>
+          <p class="ayuda">¿No está? Agrégalo en <a href="{{ url_for('catalogo', tipo='proveedores') }}">Catálogos</a>.</p>
+        </div>
+        <div class="campo"><label for="f-precio">Precio sin impuesto</label>
+          <input id="f-precio" name="precio_sin_impuesto" inputmode="decimal" value="{{ forma.precio }}" placeholder="0.00">
+          <p class="ayuda">Lo que cuesta una presentación completa, sin IVA.</p>
+        </div>
+      </fieldset>
+
+      {% if insumo and insumo.productos %}
+        <section class="campo">
+          <span class="etq">En la lista de cotejo</span>
+          <ul class="vinculos">
+            {% for p in insumo.productos | sort(attribute='id_producto') %}
+              <li><a class="v-nombre" href="{{ url_for('producto', id_producto=p.id_producto) }}">{{ p.nombre_producto }}
+                <span class="s">{{ p.area.nombre_area | bonito }}</span></a></li>
+            {% endfor %}
+          </ul>
+        </section>
+      {% endif %}
+
+      {% if insumo %}
+        {# Confirmación sin JavaScript: <details> se abre con un toque y el botón envía a /borrar #}
+        <details class="borrar">
+          <summary class="peligro">Borrar este insumo</summary>
+          <p class="ayuda">Se borrará «{{ insumo.nombre_insumo }}» del resumen.
+            {% if insumo.productos %}Los productos de la lista que lo usan volverán a “Falta”.{% endif %}</p>
+          <button class="peligro-btn" type="submit" formnovalidate
+            formaction="{{ url_for('borrar_insumo', id_insumo=insumo.id_insumo) }}">Sí, borrar definitivamente</button>
+        </details>
+      {% endif %}
+    </form>
+  </section>
+{% endblock %}

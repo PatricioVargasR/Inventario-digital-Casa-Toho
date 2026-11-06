@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block titulo %}{{ cat.titulo }} · Inventario Casa Töhö{% endblock %}
+
+{% block cuerpo %}
+  {% include '_cabecera.html' %}
+
+  <main class="envoltura">
+    <h2 class="titulo-pagina">Catálogos</h2>
+    <nav class="chips sin-pegar" aria-label="Catálogo">
+      <a class="chip" href="{{ url_for('catalogo', tipo='proveedores') }}" {% if tipo == 'proveedores' %}aria-current="true"{% endif %}>Proveedores</a>
+      <a class="chip" href="{{ url_for('catalogo', tipo='categorias') }}" {% if tipo == 'categorias' %}aria-current="true"{% endif %}>Categorías</a>
+    </nav>
+    <p class="ayuda">Son las listas que aparecen al capturar un insumo. Puedes corregir nombres y borrar los que nadie usa.
+      Las unidades de medida (kg, gr, lt, ml, pza, gal) son fijas.</p>
+
+    <form class="agregar-catalogo" method="post" action="{{ url_for('agregar_catalogo', tipo=tipo) }}" autocomplete="off">
+      {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+      <div class="busca-fila">
+        <input name="nombre" maxlength="80" value="{{ nuevo }}" placeholder="Nuevo {{ cat.uno }}" aria-label="Nuevo {{ cat.uno }}" required>
+        <button class="primario-chico" type="submit">Agregar</button>
+      </div>
+    </form>
+
+    <div class="lista">
+      <section class="grupo">
+        <h2>{{ cat.titulo }} · {{ filas | length }}</h2>
+        <ul>
+          {% for f in filas %}
+            <li id="fila-{{ f.id }}" class="fila-cat">
+              <form method="post" action="{{ url_for('renombrar_catalogo', tipo=tipo, id_=f.id) }}" autocomplete="off">
+                <input name="nombre" maxlength="80" value="{{ f.nombre }}" aria-label="Nombre">
+                <button class="secundario chico" type="submit">Guardar</button>
+              </form>
+              <div class="meta">
+                <span>{{ f.usos }} insumo{{ '' if f.usos == 1 else 's' }}</span>
+                {% if not f.usos %}
+                  <form method="post" action="{{ url_for('borrar_catalogo', tipo=tipo, id_=f.id) }}">
+                    <button class="peligro" type="submit">Borrar</button>
+                  </form>
+                {% endif %}
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+      </section>
+    </div>
+  </main>
+{% endblock %}

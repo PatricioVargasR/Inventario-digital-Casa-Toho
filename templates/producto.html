@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block titulo %}{{ producto.nombre_producto }} · Inventario Casa Töhö{% endblock %}
+
+{% block cuerpo %}
+  <section class="hoja" aria-labelledby="hoja-titulo">
+    <div class="hoja-top">
+      <a class="btn-icono" href="{{ url_for('area', id_area=producto.area_producto, _anchor='producto-' ~ producto.id_producto) }}">← Volver</a>
+      <div class="t" id="hoja-titulo">{{ producto.nombre_producto }}</div>
+    </div>
+
+    <div class="form sin-barra">
+      <p class="ayuda">
+        Área: <b>{{ producto.area.nombre_area | bonito }}</b> ·
+        Estado: <span class="pill {{ {'listo': 'ok', 'revisar': 'pend', 'falta': 'falta'}[producto.estado] }}">{{ estados[producto.estado] }}</span>
+      </p>
+
+      {# ---- Lo que ya está vinculado #}
+      <section class="campo">
+        <span class="etq">En el resumen</span>
+        {% if vinculados %}
+          <ul class="vinculos">
+            {% for i in vinculados %}
+              <li>
+                <a class="v-nombre" href="{{ url_for('editar_insumo', id_insumo=i.id_insumo) }}">
+                  {{ i.nombre_insumo }}
+                  <span class="s">{{ (i.faltantes | faltan_texto) or 'Con todos sus datos' }}</span>
+                </a>
+                <form method="post" action="{{ url_for('desvincular', id_producto=producto.id_producto) }}">
+                  <input type="hidden" name="id_insumo" value="{{ i.id_insumo }}">
+                  <button class="peligro" type="submit">Quitar</button>
+                </form>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="vacio chico"><b>Todavía no está en el resumen</b>Vincúlalo con un insumo que ya exista o crea uno nuevo.</p>
+        {% endif %}
+
+        {% if producto.estado == 'revisar' %}
+          <div class="aviso">
+            <b>Este producto estaba marcado como parecido.</b> Revisa que el insumo de arriba sea el correcto.
+            <form method="post" action="{{ url_for('confirmar', id_producto=producto.id_producto) }}" class="en-aviso">
+              <button class="primario-chico" type="submit">Sí, es correcto</button>
+            </form>
+          </div>
+        {% endif %}
+      </section>
+
+      {# ---- Crear uno nuevo #}
+      <section class="campo">
+        <span class="etq">Agregar al resumen</span>
+        <a class="primario-enlace" href="{{ url_for('nuevo_insumo', producto=producto.id_producto) }}">Crear insumo nuevo</a>
+        <p class="ayuda">Se crea con el nombre «{{ producto.nombre_producto }}» y queda vinculado a este producto.</p>
+      </section>
+
+      {# ---- Sugerencias para no duplicar #}
+      {% if sugerencias %}
+        <section class="campo">
+          <span class="etq">¿Es alguno de estos?</span>
+          <ul class="vinculos">
+            {% for i in sugerencias %}
+              <li>
+                <span class="v-nombre">{{ i.nombre_insumo }}<span class="s">{{ i.detalle or 'Sin datos de presentación' }}</span></span>
+                <form method="post" action="{{ url_for('vincular', id_producto=producto.id_producto) }}">
+                  <input type="hidden" name="id_insumo" value="{{ i.id_insumo }}">
+                  <button class="secundario chico" type="submit">Vincular</button>
+                </form>
+              </li>
+            {% endfor %}
+          </ul>
+        </section>
+      {% endif %}
+
+      {# ---- Vincular con cualquier otro #}
+      {% if disponibles %}
+        <form class="campo" method="post" action="{{ url_for('vincular', id_producto=producto.id_producto) }}">
+          <label for="v-insumo">Vincular con otro insumo del resumen</label>
+          <div class="busca-fila">
+            <select id="v-insumo" name="id_insumo" required>
+              <option value="">Elegir insumo…</option>
+              {% for i in disponibles %}<option value="{{ i.id_insumo }}">{{ i.nombre_insumo }}</option>{% endfor %}
+            </select>
+            <button class="secundario" type="submit">Vincular</button>
+          </div>
+        </form>
+      {% endif %}
+
+      {# ---- Quitar de la lista #}
+      <form method="post" action="{{ url_for('borrar_producto', id_producto=producto.id_producto) }}">
+        <details class="borrar">
+          <summary class="peligro">Quitar este producto de la lista</summary>
+          <p class="ayuda">Se quita «{{ producto.nombre_producto }}» de la lista de cotejo. Los insumos del resumen no se borran.</p>
+          <button class="peligro-btn" type="submit">Sí, quitar de la lista</button>
+        </details>
+      </form>
+    </div>
+  </section>
+{% endblock %}

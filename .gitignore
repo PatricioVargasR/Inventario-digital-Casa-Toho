@@ -1,0 +1,19 @@
+# Entorno y archivos generados
+.venv/
+venv/
+__pycache__/
+*.pyc
+.env
+
+# Base de datos local (se crea sola con `python seed.py`)
+instance/
+*.db
+*.sqlite
+*.sqlite3
+
+# Datos reales del negocio (nombres de proveedores y precios): no subir a un repositorio público
+datos/*.xlsx
+
+# Excel descargados desde la app
+inventario-resumen-*.xlsx
+inventario-respaldo-*.xlsx
