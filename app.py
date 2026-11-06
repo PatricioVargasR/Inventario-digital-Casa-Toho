@@ -46,13 +46,17 @@ import schemas
 from database import Base, LocalSession, engine
 from utiles import clave, limpiar, moneda, numero
 
+from dotenv import load_dotenv
+
 # Inicializamos los modelos de la base de datos y las unidades de medida
-Base.metadata.create_all(bind=engine)
-with LocalSession() as _db:
-    excel.asegurar_catalogos(_db)
+# Base.metadata.create_all(bind=engine)
+# with LocalSession() as _db:
+#     excel.asegurar_catalogos(_db)
 
 # Iniciamos la aplicación de flask
 app = Flask(__name__)
+
+load_dotenv()
 
 # Avisos que se muestran tras una acción. Se pasan como ?ok=clave y solo se aceptan estas claves.
 MENSAJES = {
